@@ -1,6 +1,8 @@
 import { BaseEntity, Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { Field, ObjectType } from "type-graphql";
 import { Post } from "./Post";
+import { Updoot } from "./Updoot";
+
 
 @Entity()
 @ObjectType()
@@ -11,11 +13,11 @@ export class User extends BaseEntity {
   id!: number;
 
   @Field()
-  @Column({unique: true })
+  @Column({ unique: true })
   username!: string;
 
   @Field()
-  @Column({unique: true })
+  @Column({ unique: true })
   email!: string;
 
   //@Field() para nao ser exposta nas queries futuras
@@ -27,10 +29,12 @@ export class User extends BaseEntity {
   posts: Post[];
 
 
-  
+  @OneToMany(() => Updoot, updoot => updoot.user)
+  updoots: Updoot[];
+
   @Field(() => String)
   @CreateDateColumn()
-  createdAt : Date;
+  createdAt: Date;
 
   @Field(() => String)
   @UpdateDateColumn()

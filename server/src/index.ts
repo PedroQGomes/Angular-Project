@@ -12,6 +12,7 @@ import cors from 'cors'
 import { createConnection } from 'typeorm';
 import { Post } from './entities/Post';
 import { User } from './entities/User';
+import { Updoot } from './entities/Updoot';
 import path from 'path';
 
 
@@ -20,13 +21,13 @@ const main = async () => {
     console.log("postgres2");
     const conn = await createConnection({
         type: "postgres",
-        database: "lireddit3",
+        database: "lireddit2",
         username: "postgres",
         password: "postgres",
         logging: true,
         synchronize: true,
         migrations: [path.join(__dirname, './migrations/*')],
-        entities: [Post, User]
+        entities: [Post, User, Updoot]
     });
 
     await conn.runMigrations();

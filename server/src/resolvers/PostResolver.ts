@@ -1,104 +1,131 @@
 import { isAuth } from "../middleware/isAuth";
 import { MyContext } from "src/types";
-import { Query, Resolver,Arg, Mutation, InputType, Ctx,Field, UseMiddleware, Int, FieldResolver, Root, ObjectType } from "type-graphql";
-import{ Post } from "../entities/Post"
+import { Query, Resolver, Arg, Mutation, InputType, Ctx, Field, UseMiddleware, Int, FieldResolver, Root, ObjectType } from "type-graphql";
+import { Post } from "../entities/Post"
 import { getConnection } from "typeorm";
 
 
 @InputType()
 class PostInput {
     @Field()
-    title:string;
+    title: string;
     @Field()
-    text:string;
+    text: string;
 }
 
 @ObjectType()
-class PaginatedPosts  {
-        @Field( () =>[Post])
-        posts: Post[];
+class PaginatedPosts {
+    @Field(() => [Post])
+    posts: Post[];
 
-        @Field()
-        hasMore: boolean;
+    @Field()
+    hasMore: boolean;
 }
 
 
 @Resolver(Post)
-export class PostResolver{
+export class PostResolver {
 
-    @FieldResolver(()=>String)
-    textSnippet(@Root() post: Post){
-        return post.text.slice(0,50); // return the first 50 characters of the text
+    @FieldResolver(() => String)
+    textSnippet(@Root() post: Post) {
+        return post.text.slice(0, 50); // return the first 50 characters of the text
     }
-    
-    
+
+
 
     @Query(() => PaginatedPosts) // tipo de output que a query retorna
-    async posts(@Arg('limit',()=> Int) limit :number,@Arg('cursor',()=> String, {nullable:true} ) cursor :string | null ): Promise<PaginatedPosts> // Contexto para ter acesso ao type orm e dps é type checking da query pelo Ts
+    async posts(@Arg('limit', () => Int) limit: number, @Arg('cursor', () => String, { nullable: true }) cursor: string | null): Promise<PaginatedPosts> // Contexto para ter acesso ao type orm e dps é type checking da query pelo Ts
     {
 
-        const realLimit = Math.min(50,limit); 
+        const realLimit = Math.min(50, limit);
         const realLimitPlusOne = realLimit + 1; // limit + 1 para saber se tem mais posts
-        const qb =  getConnection()
+        const qb = getConnection()
             .getRepository(Post)
             .createQueryBuilder("p")
-            .innerJoinAndSelect("p.creator","u","u.id = p.creatorId")
+            .innerJoinAndSelect("p.creator", "u", "u.id = p.creatorId")
             .orderBy('p.createdAt', 'DESC')
             .take(realLimitPlusOne)
 
-        if(cursor){
+        if (cursor) {
             qb.where('p.createdAt < :cursor', { cursor: new Date(parseInt(cursor)) });
         }
-        
+
         const posts = await qb.getMany();
 
-        return { posts: posts.slice(0,realLimit), hasMore: posts.length === realLimitPlusOne};
+        return { posts: posts.slice(0, realLimit), hasMore: posts.length === realLimitPlusOne };
     }
 
     // Query para aceder a um post com um dado id
-    @Query(() => Post,{ nullable:true }) 
+    @Query(() => Post, { nullable: true })
     post(
-        @Arg('id') id: number, 
-        ): Promise<Post | undefined> 
-    {
+        @Arg('id') id: number,
+    ): Promise<Post | undefined> {
         return Post.findOne(id);
     }
 
     // Criaçao de um novo Post
-    @Mutation(() => Post) 
+    @Mutation(() => Post)
     @UseMiddleware(isAuth)
     async createPost(
-        @Arg('input') input: PostInput, @Ctx(){req} :MyContext): Promise<Post> 
-    {
-        return Post.create({...input, creatorId: req.session.userId }).save();
+        @Arg('input') input: PostInput, @Ctx() { req }: MyContext): Promise<Post> {
+        return Post.create({ ...input, creatorId: req.session.userId }).save();
     }
 
 
     // Alteraçao de um Post dado um id.
-    @Mutation(() => Post,{ nullable: true}) 
+    @Mutation(() => Post, { nullable: true })
     async updatePost(
         @Arg('id') id: number,
-        @Arg('title',() => String,{ nullable:true }) title: string, // Arg(key) value
-         ): Promise<Post | null> 
-    {
+        @Arg('title', () => String, { nullable: true }) title: string, // Arg(key) value
+    ): Promise<Post | null> {
         const post = await Post.findOne(id)
-        if(!post){
+        if (!post) {
             return null;
         }
 
-        if(typeof title !== "undefined"){
-            await Post.update({id},{title});
+        if (typeof title !== "undefined") {
+            await Post.update({ id }, { title });
         }
         return post;
     }
 
     // Eliminar um Post pelo id.
-    @Mutation(() => Boolean) 
+    @Mutation(() => Boolean)
     async deletePostById(
         @Arg('id') id: number,
-        ): Promise<boolean> 
-    {
+    ): Promise<boolean> {
         await Post.delete(id);
+
+        return true;
+    }
+
+
+    @Mutation(() => Boolean)
+    @UseMiddleware(isAuth)
+    async vote(
+        @Arg('postId', () => Int) postId: number,
+        @Arg('value', () => Int) value: number,
+        @Ctx() { req }: MyContext
+    ): Promise<boolean> {
+
+        const isUpdoot = value !== -1;
+        const realValue = isUpdoot ? 1 : -1;
+        const { userId } = req.session;
+
+        await getConnection().query(
+            `
+            START TRANSACTION;
+
+            insert into updoot ("userId","postId",value)
+            values (${userId},${postId},${realValue});
+
+            update post
+            set points = points + ${realValue}
+            where id = ${postId};
+
+            COMMIT;
+            `,
+        )
 
         return true;
     }
