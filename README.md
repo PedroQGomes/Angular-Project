@@ -42,3 +42,10 @@ To start the server
 yarn start
 ```
 
+
+### Install and compile the client
+
+Install all project dependencies 
+```
+yarn dev
+```
