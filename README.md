@@ -3,7 +3,7 @@
 Full stack application of a Reddit clone made in **Typescript** with **React** for the frontend and for the BackEnd **Node Js** with a **Graphql Api** .
 
 
-![Alt text](reddit_app_arquitecture.png){width=50% height=50%}
+![Alt text](reddit_app_arquitecture.png)
 
 ## Server 
 
