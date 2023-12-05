@@ -14,6 +14,7 @@ import { Post } from './entities/Post';
 import { User } from './entities/User';
 import { Updoot } from './entities/Updoot';
 import path from 'path';
+import { createUpdootLoader } from "./utils/createUpdootLoader";
 
 
 const main = async () => {
@@ -67,7 +68,7 @@ const main = async () => {
             validate: false
 
         }),
-        context: ({ req, res }) => ({ req, res, redis }), // o contexto serve para por objectos que podem ser acedidos por todos os resolvers do graphql
+        context: ({ req, res }) => ({ req, res, redis, updootLoader: createUpdootLoader(), }), // o contexto serve para por objectos que podem ser acedidos por todos os resolvers do graphql
     });
 
     await apolloServer.start();

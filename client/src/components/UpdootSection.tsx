@@ -17,22 +17,31 @@ export const UpdootSection: React.FC<UpdootSectionProps> = ({ post }) => {
         <Flex direction="column" justifyContent="center" alignItems="center" mr={4}>
             <IconButton
                 onClick={async () => {
+                    console.log(post.voteStatus)
+                    if (post.voteStatus === 1) {
+                        return;
+                    }
                     await vote({
                         postId: post.id,
                         value: 1,
                     })
                 }}
+                color={post.voteStatus === 1 ? "green" : undefined}
                 isLoading={fetching}
                 icon={<ChevronUpIcon />}
             />
             {post.points}
             <IconButton
                 onClick={async () => {
+                    if (post.voteStatus === -1) {
+                        return;
+                    }
                     await vote({
                         postId: post.id,
                         value: -1,
                     })
                 }}
+                color={post.voteStatus === -1 ? "red" : undefined}
                 isLoading={fetching}
                 icon={<ChevronDownIcon />} />
         </Flex>

@@ -32,6 +32,20 @@ export class PostResolver {
         return post.text.slice(0, 50); // return the first 50 characters of the text
     }
 
+    @FieldResolver(() => Int, { nullable: true })
+    async voteStatus(
+        @Root() post: Post,
+        @Ctx() { updootLoader, req }: MyContext
+    ) {
+        if (!req.session.userId) {
+            req.session.userId = 2;
+        }
+        const updoot = await updootLoader.load({
+            postId: post.id,
+            userId: req.session.userId,
+        });
+        return updoot ? updoot.value : null;
+    }
 
 
     @Query(() => PaginatedPosts) // tipo de output que a query retorna
