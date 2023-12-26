@@ -38,7 +38,7 @@ export class PostResolver {
         @Ctx() { updootLoader, req }: MyContext
     ) {
         if (!req.session.userId) {
-            req.session.userId = 2;
+            return null;
         }
         const updoot = await updootLoader.load({
             postId: post.id,
