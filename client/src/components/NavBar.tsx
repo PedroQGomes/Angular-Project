@@ -4,6 +4,8 @@ import NextLink from 'next/link'
 import { useLogoutMutation, useMeQuery } from '../generated/graphql'
 import { Button } from "@chakra-ui/react"
 import { isServer } from '../utils/isServer'
+import { Heading } from '@chakra-ui/react'
+
 
 const NavBar = () => {
     const [{ fetching: logoutFetching }, logout] = useLogoutMutation();
@@ -24,7 +26,14 @@ const NavBar = () => {
         )
     } else { // esta logado
         body = (
-            <Flex>
+            <Flex align="center">
+                <Box mr={4}>
+                    <NextLink href="create-post">
+                        <Button as={Link} ml="auto">
+                            Create Post
+                        </Button>
+                    </NextLink>
+                </Box>
                 <Box mr={2}>{data.me.username} </Box>
                 <Button onClick={
                     () => {
@@ -40,6 +49,11 @@ const NavBar = () => {
 
     return (
         <Flex position="sticky" top={0} zIndex={1} bg="tan" p={4}>
+            <NextLink href="/">
+                <Link>
+                    <Heading fontSize='xl'>RedditApp</Heading>
+                </Link>
+            </NextLink>
             <Box ml={'auto'}>
                 {body}
             </Box>
