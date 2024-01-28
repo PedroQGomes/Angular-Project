@@ -106,11 +106,13 @@ export class PostResolver {
 
     // Eliminar um Post pelo id.
     @Mutation(() => Boolean)
+    @UseMiddleware(isAuth)
     async deletePostById(
-        @Arg('id') id: number,
+        @Arg('id', () => Int) id: number,
+        @Ctx() { req }: MyContext
     ): Promise<boolean> {
-        await Post.delete(id);
 
+        await Post.delete({ id, creatorId: req.session.userId });
         return true;
     }
 
