@@ -64,11 +64,21 @@ const cursorPagination = (): Resolver => {
 
 
 
+
+function invalidateALLPosts(cache: Cache) {
+  const allFields = cache.inspectFields('Query');
+  const fieldInfos = allFields.filter((info) => info.fieldName === 'posts');
+  fieldInfos.forEach((fi) => {
+    cache.invalidate('Query', 'posts', fi.arguments || {})// invalidate all the paginated items of the query so that it fetches again with the newlly created post
+  })
+}
+
+
 export const createUrqlClient = (_ssrExchange: any, ctx: any) => {
 
   let cookie = ''
   if (isServer()) {
-    cookie = ctx.req.headers.cookie
+    cookie = ctx?.req?.headers?.cookie
   }
 
   return {
@@ -120,11 +130,7 @@ export const createUrqlClient = (_ssrExchange: any, ctx: any) => {
 
           },
           createPost: (_result, args, cache, info) => {
-            const allFields = cache.inspectFields('Query');
-            const fieldInfos = allFields.filter((info) => info.fieldName === 'posts');
-            fieldInfos.forEach((fi) => {
-              cache.invalidate('Query', 'posts', fi.arguments || {})// invalidate all the paginated items of the query so that it fetches again with the newlly created post
-            })
+            invalidateALLPosts(cache)
           },
           logout: (_result, args, cache, info) => {
             betterUpdateQuery<LogoutMutation, MeQuery>(
@@ -149,7 +155,8 @@ export const createUrqlClient = (_ssrExchange: any, ctx: any) => {
                   };
                 }
               }
-            )
+            );
+            invalidateALLPosts(cache);
           },
           register: (_result, args, cache, info) => {
             betterUpdateQuery<RegisterMutation, MeQuery>(

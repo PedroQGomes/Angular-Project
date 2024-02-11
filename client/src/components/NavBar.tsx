@@ -5,11 +5,13 @@ import { useLogoutMutation, useMeQuery } from '../generated/graphql'
 import { Button } from "@chakra-ui/react"
 import { isServer } from '../utils/isServer'
 import { Heading } from '@chakra-ui/react'
-
+import { useRouter } from 'next/router';
 
 const NavBar = () => {
     const [{ fetching: logoutFetching }, logout] = useLogoutMutation();
     const [{ data, fetching }] = useMeQuery();
+
+    const router = useRouter()
 
     let body = null;
     if (!data?.me) { // nao esta logado ou fetching
@@ -37,7 +39,8 @@ const NavBar = () => {
                 <Box mr={2}>{data.me.username} </Box>
                 <Button onClick={
                     () => {
-                        logout();
+                        await logout();
+                        router.reload();
                     }
                 }
                     isLoading={logoutFetching}

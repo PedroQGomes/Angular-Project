@@ -14,11 +14,11 @@ import {
   Icon,
   IconButton,
 } from '@chakra-ui/react'
-import { ChevronUpIcon, ChevronDownIcon, SearchIcon, DeleteIcon } from '@chakra-ui/icons'
+import { ChevronUpIcon, ChevronDownIcon, EditIcon, DeleteIcon } from '@chakra-ui/icons'
 import { withUrqlClient } from 'next-urql';
 import { DarkModeSwitch } from '../components/DarkModeSwitch'
 import { createUrqlClient } from '../utils/createUrqlClient'
-import { useDeletePostMutation, usePostsQuery } from '../generated/graphql';
+import { useDeletePostMutation, useMeQuery, usePostsQuery } from '../generated/graphql';
 import Layout from '../components/Layout';
 import UpdootSection from '../components/UpdootSection';
 import NextLink from 'next/link';
@@ -29,6 +29,9 @@ const Index = () => {
   const [variables, setvariables] = useState({ limit: 15, cursor: null as null | string });
   const [{ data, fetching }] = usePostsQuery({ variables });
   const [, deletePost] = useDeletePostMutation()
+
+  const [{ data: meData }] = useMeQuery()
+
 
   if (!fetching && !data) {
     return (<Layout> data query failed </Layout>)
@@ -55,17 +58,28 @@ const Index = () => {
                       </Link>
                     </NextLink>
                   </Box>
-                  <IconButton
-                    icon={<DeleteIcon />}
-                    mt={4}
-                    aria-label='Search database'
-                    color="red"
-                    onClick={() => {
-                      deletePost({ id: post.id })
-                    }}
-                  >
-                    Delete Post
-                  </IconButton>
+                  {meData?.me?.id !== post.creator.id ? null : <Box ml="auto">
+                    <NextLink href="/post/edit/[id]" as={`/post/edit/${post.id}`}>
+                      <IconButton
+                        icon={<EditIcon />}
+                        mr={4}
+                        mt={4}
+                        aria-label='Edit Post'
+                      >
+                      </IconButton>
+                    </NextLink>
+                    <IconButton
+                      icon={<DeleteIcon />}
+                      mt={4}
+                      aria-label='Search database'
+                      color="red"
+                      onClick={() => {
+                        deletePost({ id: post.id })
+                      }}
+                    >
+                      Delete Post
+                    </IconButton>
+                  </Box>}
                 </Flex>
                 <Text>posted by {post.creator.username}</Text>
                 <Text mt={4} flex={1}>{post.textSnippet}</Text>
